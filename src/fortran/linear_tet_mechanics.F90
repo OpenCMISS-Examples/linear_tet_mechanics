@@ -1,5 +1,5 @@
 !> Main program
-PROGRAM LINEARTETEXAMPLE
+PROGRAM LinearTetMechanicsExample
 
   USE OpenCMISS
   USE OpenCMISS_Iron
@@ -69,7 +69,9 @@ PROGRAM LINEARTETEXAMPLE
 
   TYPE(cmfe_BasisType) :: Basis
   TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
-  TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem, WorldCoordinateSystem
+  TYPE(cmfe_ComputationEnvironmentType) :: computationEnvironment
+  TYPE(cmfe_ContextType) :: context
+  TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
   TYPE(cmfe_MeshType) :: Mesh
   TYPE(cmfe_DecompositionType) :: Decomposition
   TYPE(cmfe_EquationsType) :: Equations
@@ -106,9 +108,11 @@ PROGRAM LINEARTETEXAMPLE
 #endif
 
   !Intialise cmiss
-  CALL cmfe_Initialise(WorldCoordinateSystem,WorldRegion,Err)
-
-  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Initialise(context,err)
+  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,err)
+  CALL cmfe_Region_Initialise(worldRegion,err)
+  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
 
   WRITE(*,'(A)') "Program starting."
 
@@ -116,8 +120,10 @@ PROGRAM LINEARTETEXAMPLE
   CALL cmfe_DiagnosticsSetOn(CMFE_FROM_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",["FiniteElasticity_FiniteElementResidualEvaluate"],Err) !CMFE_ALL_DIAG_TYPE
 
   !Get the number of computational nodes and this computational node number
-  CALL cmfe_ComputationalNumberOfNodesGet(NumberOfComputationalNodes,Err)
-  CALL cmfe_ComputationalNodeNumberGet(ComputationalNodeNumber,Err)
+  CALL cmfe_ComputationEnvironment_Initialise(computationEnvironment,err)
+  CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
+  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfComputationalNodes,err)
+  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,computationalNodeNumber,err)
 
   NumberGlobalXElements=1
   NumberGlobalYElements=1
@@ -132,7 +138,7 @@ PROGRAM LINEARTETEXAMPLE
 
   !Create a CS - default is 3D rectangular cartesian CS with 0,0,0 as origin
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
-  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,CoordinateSystem,Err)
+  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,context,CoordinateSystem,Err)
   CALL cmfe_CoordinateSystem_TypeSet(CoordinateSystem,CMFE_COORDINATE_RECTANGULAR_CARTESIAN_TYPE,Err)
   CALL cmfe_CoordinateSystem_DimensionSet(CoordinateSystem,NumberOfSpatialCoordinates,Err)
   CALL cmfe_CoordinateSystem_OriginSet(CoordinateSystem,[0.0_CMISSRP,0.0_CMISSRP,0.0_CMISSRP],Err)
@@ -147,7 +153,7 @@ PROGRAM LINEARTETEXAMPLE
 
   !Define basis function - Simplex tri-linear
   CALL cmfe_Basis_Initialise(Basis,Err)
-  CALL cmfe_Basis_CreateStart(BasisUserNumber,Basis,Err)
+  CALL cmfe_Basis_CreateStart(BasisUserNumber,context,Basis,Err)
   CALL cmfe_Basis_TypeSet(Basis,CMFE_BASIS_SIMPLEX_TYPE,Err)
   CALL cmfe_Basis_NumberOfXiSet(Basis,NumberOfXiCoordinates,Err)
   CALL cmfe_Basis_InterpolationXiSet(Basis,[CMFE_BASIS_LINEAR_SIMPLEX_INTERPOLATION, &
@@ -309,7 +315,7 @@ PROGRAM LINEARTETEXAMPLE
 
   !Define the problem
   CALL cmfe_Problem_Initialise(Problem,Err)
-  CALL cmfe_Problem_CreateStart(ProblemUserNumber,[CMFE_PROBLEM_ELASTICITY_CLASS,CMFE_PROBLEM_FINITE_ELASTICITY_TYPE, &
+  CALL cmfe_Problem_CreateStart(ProblemUserNumber,context,[CMFE_PROBLEM_ELASTICITY_CLASS,CMFE_PROBLEM_FINITE_ELASTICITY_TYPE, &
     & CMFE_PROBLEM_NO_SUBTYPE],Problem,Err)
   CALL cmfe_Problem_CreateFinish(Problem,Err)
 
@@ -395,11 +401,11 @@ PROGRAM LINEARTETEXAMPLE
   CALL cmfe_Fields_ElementsExport(Fields,"./results/LinearTet","FORTRAN",Err)
   CALL cmfe_Fields_Finalise(Fields,Err)
 
-  CALL cmfe_Finalise(Err)
+  CALL cmfe_Finalise(context,Err)
 
   WRITE(*,'(A)') "Program successfully completed."
 
   STOP
 
-END PROGRAM LINEARTETEXAMPLE
+END PROGRAM LinearTetMechanicsExample
 
