@@ -116,8 +116,8 @@ PROGRAM LINEARTETEXAMPLE
   CALL cmfe_DiagnosticsSetOn(CMFE_FROM_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",["FiniteElasticity_FiniteElementResidualEvaluate"],Err) !CMFE_ALL_DIAG_TYPE
 
   !Get the number of computational nodes and this computational node number
-  CALL cmfe_ComputationalNumberOfNodesGet(NumberOfComputationalNodes,Err)
-  CALL cmfe_ComputationalNodeNumberGet(ComputationalNodeNumber,Err)
+  CALL cmfe_ComputationalNumberOfNodesGet(numberOfComputationalNodes,err)
+  CALL cmfe_ComputationalNodeNumberGet(computationalNodeNumber,err)
 
   NumberGlobalXElements=1
   NumberGlobalYElements=1
